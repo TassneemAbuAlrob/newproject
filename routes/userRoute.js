@@ -238,6 +238,7 @@ router.get("/followers/:email", async (req, res) => {
     const followerList = followers.map((follower) => ({
       name: follower.name,
       email: follower.email,
+      phoneNumber: follower.phoneNumber,
       profilePicture: `http://192.168.1.112:3000/uploads/${follower.profilePicture}`,
     }));
 
@@ -267,6 +268,8 @@ router.get("/following/:email", async (req, res) => {
     const followingList = following.map((followedUser) => ({
       name: followedUser.name,
       email: followedUser.email,
+      phoneNumber: followedUser.phoneNumber,
+
       profilePicture: `http://192.168.1.112:3000/uploads/${followedUser.profilePicture}`,
     }));
 
@@ -276,6 +279,154 @@ router.get("/following/:email", async (req, res) => {
     res
       .status(500)
       .json({ error: "An error occurred while fetching following users" });
+  }
+});
+
+//parentprofile
+
+router.get("/showprentprofile/:email", async (req, res) => {
+  const userEmail = req.params.email;
+
+  console.log("Requested email:", userEmail);
+
+  try {
+    let user = await User.findOne({ email: userEmail });
+
+    console.log("Database query result:", user);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json(user);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+//edit perant profile information:
+
+router.post("/editparentprofile/:email", async (req, res) => {
+  const userEmail = req.params.email;
+  const { name, email, phoneNumber } = req.body;
+  const profilePicture = req.files ? req.files.profilePicture : null;
+
+  try {
+    const user = await User.findOne({ email: userEmail });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Optional: Add data validation here
+
+    user.name = name;
+    user.email = email;
+    user.phoneNumber = phoneNumber;
+
+    if (profilePicture) {
+      const uploadedFile = profilePicture;
+      const newFileName = `${Date.now()}_${uploadedFile.name}`;
+      await uploadedFile.mv(`./uploads/${newFileName}`);
+
+      user.profilePicture = newFileName;
+    }
+
+    await user.save();
+
+    res.json({ message: "Child information updated successfully" });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ error: "An error occurred while updating Child information" });
+  }
+});
+
+//add children
+
+router.post("/addChild/:parentemail", async (req, res) => {
+  try {
+    const existingUser = await User.findOne({ email: req.body.email });
+    if (existingUser) {
+      return res.status(409).json({ message: "Email is already in use" });
+    }
+
+    if (req.body.password !== req.body.confirmPassword) {
+      return res.status(400).json({ message: "Passwords do not match" });
+    }
+
+    const newUser = new User({
+      email: req.body.email,
+      password: req.body.password,
+      name: req.body.name,
+      profileType: "child",
+      phoneNumber: req.body.phoneNumber,
+      profilePicture: req.body.profilePicture,
+      parentEmail: req.params.parentemail,
+    });
+
+    await newUser.save();
+
+    console.log("child add successfully:", newUser);
+    res.status(201).json(newUser);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+//number of children
+const countChildUsers = async (parentEmail) => {
+  try {
+    const count = await User.countDocuments({ parentEmail: parentEmail });
+    return count;
+  } catch (error) {
+    console.error(error);
+    throw new Error("Error counting child users");
+  }
+};
+router.get("/countChildUsers/:parentemail", async (req, res) => {
+  try {
+    const parentEmail = req.params.parentemail;
+    const userCount = await countChildUsers(parentEmail);
+
+    res.status(200).json({ count: userCount });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Fetch children users based on parent's email
+router.get("/fetchChildren/:parentemail", async (req, res) => {
+  const parentEmail = req.params.parentemail;
+
+  try {
+    const parentUser = await User.findOne({ email: parentEmail });
+
+    if (!parentUser) {
+      return res.status(404).json({ error: "Parent user not found" });
+    }
+
+    const children = await User.find({
+      parentEmail: parentEmail,
+      profileType: "child",
+    });
+
+    const childrenList = children.map((child) => ({
+      name: child.name,
+      email: child.email,
+      profilePicture: `http://192.168.1.112:3000/uploads/${child.profilePicture}`,
+    }));
+
+    res.status(200).json(childrenList);
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ error: "An error occurred while fetching children users" });
   }
 });
 

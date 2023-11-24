@@ -13,7 +13,8 @@ const userSchema = new mongoose.Schema({
   phoneNumber: Number,
   confirmPassword: String,
   profileType: String,
-  profilePicture: String,
+  profilePicture: { type: String, default: "nonProfile.jpg" },
+  parentEmail: String,
   following: [
     {
       type: mongoose.Schema.Types.ObjectId,

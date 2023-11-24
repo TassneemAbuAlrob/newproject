@@ -7,6 +7,7 @@ const userRouter = require("./routes/userRoute");
 const postRouter = require("./routes/postRoute");
 const likeRouter = require("./routes/likeRoute");
 const commentRouter = require("./routes/commentRoute");
+const suggRouter = require("./routes/suggRoute");
 
 const mongoose = require("mongoose");
 mongoose.connect(
@@ -26,6 +27,7 @@ app.use(userRouter);
 app.use(postRouter);
 app.use(likeRouter);
 app.use(commentRouter);
+app.use(suggRouter);
 
 app.listen(port, () => {
   console.log("port running on " + port);
