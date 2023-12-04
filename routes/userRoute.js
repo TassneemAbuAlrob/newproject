@@ -9,8 +9,6 @@ router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    console.log(req.body);
-
     let user = await User.findOne({ email: email });
     if (!user) {
       return res.status(404).send("User not found");
@@ -21,7 +19,10 @@ router.post("/login", async (req, res) => {
       return res.status(400).send("Password mismatch");
     }
 
-    return res.status(200).send("User successfully authenticated");
+    return res.status(200).json({
+      message: "User successfully authenticated",
+      profileType: user.profileType,
+    });
   } catch (err) {
     return res.status(500).send(err.message);
   }
@@ -429,5 +430,36 @@ router.get("/fetchChildren/:parentemail", async (req, res) => {
       .json({ error: "An error occurred while fetching children users" });
   }
 });
+//alaaa
 
+router.get("/users", async (req, res) => {
+  try {
+    let users = await User.find();
+    return res.status(200).json(users);
+  } catch (err) {
+    return res.status(500).send(err.message);
+  }
+});
+
+router.get("/users/count", async (req, res) => {
+  let count = await User.count();
+  return res.status(200).json(count);
+});
+
+router.delete("/users/:id", async (req, res) => {
+  try {
+    let { id } = req.params;
+    let isDeleted = await User.deleteOne({
+      _id: id,
+    });
+
+    if (isDeleted) {
+      return res.status(200).send("user was deleted");
+    }
+
+    return res.status(400).send("not deleted");
+  } catch (err) {
+    return res.status(500).send(err.message);
+  }
+});
 module.exports = router;

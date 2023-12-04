@@ -14,6 +14,20 @@ const commentSchema = new mongoose.Schema({
   Textcomment: String,
 
   imagecomment: String,
+  // for alaa
+  // commenter: {
+  //   type: mongoose.Schema.Types.ObjectId,
+  //   ref: "User",
+  // },
+  // date: {
+  //   type: String,
+  //   required: true,
+  // },
+
+  // content: {
+  //   type: String,
+  //   required: true,
+  // },
 });
 
 module.exports = mongoose.model("Comment", commentSchema);
